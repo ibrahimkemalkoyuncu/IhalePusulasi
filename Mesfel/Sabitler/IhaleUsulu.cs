@@ -1,0 +1,15 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Mesfel.Sabitler
+{
+    // İhale Usulü Enum
+    public enum IhaleUsulu
+    {
+        [Display(Name = "Açık İhale")]
+        AcikIhale = 1,
+        [Display(Name = "Belli İstekliler Arası İhale")]
+        BelliIsteklilerArasi = 2,
+        [Display(Name = "Pazarlık Usulü")]
+        PazarlikUsulu = 3
+    }
+}

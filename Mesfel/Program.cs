@@ -1,29 +1,83 @@
+using Mesfel.Data;
+using Mesfel.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Servisleri DI Container'a ekle
 builder.Services.AddControllersWithViews();
+
+// Entity Framework ve SQL Server baðlantýsý
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Ýhale hesaplama servisini ekle
+builder.Services.AddScoped<IIhaleHesaplamaService, IhaleHesaplamaService>();
+builder.Services.AddScoped<IKamuIhaleHesaplamaService, KamuIhaleHesaplamaService>();
+builder.Services.AddScoped<IRiskAnalizService, RiskAnalizService>();
+builder.Services.AddScoped<IIhaleKarsilastirmaService, IhaleKarsilastirmaService>();
+builder.Services.AddScoped<IZamanSerisiAnalizService, ZamanSerisiAnalizService>();
+
+// Session desteði ekle
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Memory cache ekle
+builder.Services.AddMemoryCache();
+
+// Logging konfigürasyonu
+builder.Services.AddLogging(builder =>
+{
+    builder.AddConsole();
+    builder.AddDebug();
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// HTTP request pipeline konfigürasyonu
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseRouting();
+app.UseStaticFiles();
 
+app.UseRouting();
+app.UseSession();
 app.UseAuthorization();
 
-app.MapStaticAssets();
-
+// Route konfigürasyonu
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Veritabaný oluþturma ve seed data
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        // Veritabaný oluþtur ve migrasyonlarý uygula
+        context.Database.EnsureCreated();
+
+        // Seed data kontrolü
+        if (!context.Ihaleler.Any())
+        {
+            context.Database.EnsureDeleted();
+            context.Database.EnsureCreated();
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Veritabaný oluþturulurken hata oluþtu.");
+    }
+}
 
 app.Run();
