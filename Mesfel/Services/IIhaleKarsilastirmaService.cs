@@ -1,4 +1,6 @@
-﻿namespace Mesfel.Services
+﻿using Mesfel.Models;
+
+namespace Mesfel.Services
 {
     public interface IIhaleKarsilastirmaService
     {

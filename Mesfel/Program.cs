@@ -1,6 +1,7 @@
 using Mesfel.Data;
 using Mesfel.Services;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.Design;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,10 @@ builder.Services.AddScoped<IKamuIhaleHesaplamaService, KamuIhaleHesaplamaService
 builder.Services.AddScoped<IRiskAnalizService, RiskAnalizService>();
 builder.Services.AddScoped<IIhaleKarsilastirmaService, IhaleKarsilastirmaService>();
 builder.Services.AddScoped<IZamanSerisiAnalizService, ZamanSerisiAnalizService>();
+
+
+builder.Services.AddScoped<IKamuIhaleHesaplamaService, KamuIhaleHesaplamaService>();
+builder.Services.AddScoped<IRiskAnalizService, RiskAnalizService>();
 
 // Session desteði ekle
 builder.Services.AddSession(options =>

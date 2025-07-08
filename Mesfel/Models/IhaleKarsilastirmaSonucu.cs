@@ -8,5 +8,6 @@
         public IhaleAnaliz Analiz2 { get; set; }
         public decimal BenzerlikOrani { get; set; } // 0-1 arası
         public List<string> Farkliliklar { get; set; }
+
     }
 }

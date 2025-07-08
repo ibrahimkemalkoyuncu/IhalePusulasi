@@ -7,9 +7,15 @@ namespace Mesfel.Sabitler
     {
         [Display(Name = "Mal Alımı")]
         MalAlimi = 1,
+
         [Display(Name = "Hizmet Alımı")]
         HizmetAlimi = 2,
+
         [Display(Name = "Yapım İşi")]
-        YapimIsi = 3
+        YapimIsi = 3,
+
+        [Display(Name = "Danışmanlık Hizmeti")]
+        Danismanlik = 4
+
     }
 }
