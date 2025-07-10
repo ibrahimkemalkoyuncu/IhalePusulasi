@@ -77,7 +77,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.Migrate(); // Migration'larý uygula
-        SeedData.Initialize(services); // Seed verilerini ekle
+        //SeedData.Initialize(services); // Seed verilerini ekle
     }
     catch (Exception ex)
     {

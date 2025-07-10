@@ -186,36 +186,36 @@ namespace Mesfel.Data
             });
 
             // Seed data
-            SeedData(modelBuilder);
+            //SeedData(modelBuilder);
         }
 
-        private void SeedData(ModelBuilder modelBuilder)
-        {
-            // Kategori seed data
-            modelBuilder.Entity<Kategori>().HasData(
-                new Kategori { Id = 1, KategoriAdi = "İnşaat", Aciklama = "İnşaat ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
-                new Kategori { Id = 2, KategoriAdi = "Bilgi İşlem", Aciklama = "Bilgi işlem ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
-                new Kategori { Id = 3, KategoriAdi = "Hizmet", Aciklama = "Hizmet ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
-                new Kategori { Id = 4, KategoriAdi = "Mal", Aciklama = "Mal alım ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
-                new Kategori { Id = 5, KategoriAdi = "Danışmanlık", Aciklama = "Danışmanlık hizmet ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now }
-            );
+        //private void SeedData(ModelBuilder modelBuilder)
+        //{
+        //    // Kategori seed data
+        //    modelBuilder.Entity<Kategori>().HasData(
+        //        new Kategori { Id = 1, KategoriAdi = "İnşaat", Aciklama = "İnşaat ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
+        //        new Kategori { Id = 2, KategoriAdi = "Bilgi İşlem", Aciklama = "Bilgi işlem ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
+        //        new Kategori { Id = 3, KategoriAdi = "Hizmet", Aciklama = "Hizmet ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
+        //        new Kategori { Id = 4, KategoriAdi = "Mal", Aciklama = "Mal alım ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now },
+        //        new Kategori { Id = 5, KategoriAdi = "Danışmanlık", Aciklama = "Danışmanlık hizmet ihaleleri", AktifMi = true, KayitTarihi = DateTime.Now }
+        //    );
 
-            // Kullanıcı seed data
-            modelBuilder.Entity<Kullanici>().HasData(
-                new Kullanici
-                {
-                    Id = 1,
-                    KullaniciAdi = "admin",
-                    Email = "admin@mesfel.com",
-                    AdSoyad = "Sistem Yöneticisi",
-                    Telefon = "555-0000",
-                    Rol = "Admin",
-                    AktifMi = true,
-                    KayitTarihi = DateTime.Now,
-                    // BURAYA SifreHash değerini eklemelisiniz:
-                    SifreHash = "YOUR_HASHED_PASSWORD_HERE" // Örnek: BCrypt.Net.BCrypt.HashPassword("your_initial_admin_password")
-                }
-            );
-        }
+        //    // Kullanıcı seed data
+        //    modelBuilder.Entity<Kullanici>().HasData(
+        //        new Kullanici
+        //        {
+        //            Id = 1,
+        //            KullaniciAdi = "admin",
+        //            Email = "admin@mesfel.com",
+        //            AdSoyad = "Sistem Yöneticisi",
+        //            Telefon = "555-0000",
+        //            Rol = "Admin",
+        //            AktifMi = true,
+        //            KayitTarihi = DateTime.Now,
+        //            // BURAYA SifreHash değerini eklemelisiniz:
+        //            SifreHash = "YOUR_HASHED_PASSWORD_HERE" // Örnek: BCrypt.Net.BCrypt.HashPassword("your_initial_admin_password")
+        //        }
+        //    );
+        //}
     }
 }

@@ -44,14 +44,21 @@ namespace Mesfel.Controllers
                     .ToListAsync();
 
                 // Genel istatistikler
-                var istatistikler = await _ihaleHesaplamaService.IhaleIstatistikleriGetirAsync();
+                 var istatistikler = await _ihaleHesaplamaService.IhaleIstatistikleriGetirAsync();
+
+
 
                 // Dashboard model oluþtur
                 var dashboardModel = new DashboardViewModel
                 {
                     SonIhaleler = sonIhaleler,
                     AktifIhaleler = aktifIhaleler,
-                    Istatistikler = istatistikler
+                    Istatistikler = istatistikler.Select(s => new Mesfel.ViewModel.IstatistikVeri
+                    {
+                        Baslik = s.Baslik,
+                        Deger = s.Deger
+                        
+                    }).ToList()
                 };
 
                 return View(dashboardModel);

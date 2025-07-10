@@ -233,8 +233,8 @@ namespace Mesfel.Services
                 istatistikler.Add(new IstatistikVeri
                 {
                     Baslik = "Toplam İhale Sayısı",
-                    Deger = toplamIhaleSayisi.ToString(),
-                    Tur = "Genel"
+                    Deger = toplamIhaleSayisi,
+                    Tur = 0
                 });
 
                 // Aktif ihaleler
@@ -244,8 +244,8 @@ namespace Mesfel.Services
                 istatistikler.Add(new IstatistikVeri
                 {
                     Baslik = "Aktif İhale Sayısı",
-                    Deger = aktifIhaleSayisi.ToString(),
-                    Tur = "Genel"
+                    Deger = aktifIhaleSayisi,
+                    Tur = 0
                 });
 
                 // Tamamlanan ihaleler
@@ -254,8 +254,8 @@ namespace Mesfel.Services
                 istatistikler.Add(new IstatistikVeri
                 {
                     Baslik = "Tamamlanan İhale Sayısı",
-                    Deger = tamamlananIhaleSayisi.ToString(),
-                    Tur = "Genel"
+                    Deger = tamamlananIhaleSayisi,
+                    Tur = 0
                 });
 
                 // Ortalama teklif farkı (örnek hesaplama)
@@ -272,8 +272,8 @@ namespace Mesfel.Services
                     istatistikler.Add(new IstatistikVeri
                     {
                         Baslik = "Ortalama Teklif Farkı (%)",
-                        Deger = ortalamaTeklifFarki.ToString("F2"),
-                        Tur = "Analiz"
+                        Deger = ((int)ortalamaTeklifFarki),
+                        Tur = 1
                     });
                 }
 
@@ -555,8 +555,8 @@ namespace Mesfel.Services
     public class IstatistikVeri
     {
         public string Baslik { get; set; } = string.Empty;
-        public string Deger { get; set; } = string.Empty;
-        public string Tur { get; set; } = string.Empty;
+        public int Deger { get; set; } 
+        public int Tur { get; set; } 
     }
 
     public class IhaleIstatistikleri
