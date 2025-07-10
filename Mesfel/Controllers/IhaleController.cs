@@ -1,284 +1,194 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Mesfel.Data;
-using Mesfel.Models;
+﻿using Mesfel.Models;
 using Mesfel.Services;
+using Mesfel.Utilities;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
 
 namespace Mesfel.Controllers
 {
     public class IhaleController : Controller
     {
-        private readonly MesfelDbContext _context;
         private readonly IIhaleService _ihaleService;
+        private readonly ILogger<IhaleController> _logger;
 
-        public IhaleController(MesfelDbContext context, IIhaleService ihaleService)
+        public IhaleController(
+            IIhaleService ihaleService,
+            ILogger<IhaleController> logger)
         {
-            _context = context;
             _ihaleService = ihaleService;
+            _logger = logger;
         }
 
-        // GET: Ihale
-        public async Task<IActionResult> Index(string searchTerm = "", int page = 1, int pageSize = 10)
+        // Tüm ihaleleri listele (GET)
+        public async Task<IActionResult> Index()
         {
-            var ihaleler = await _ihaleService.GetIhalelerAsync(searchTerm, page, pageSize);
-            return View(ihaleler);
+            try
+            {
+                var ihaleler = await _ihaleService.GetIhalelerAsync();
+                return View(ihaleler);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "İhaleler listelenirken hata oluştu.");
+                return RedirectToAction("Error", "Home");
+            }
         }
 
-        // GET: Ihale/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // İhale detayını göster (GET)
+        public async Task<IActionResult> Details(int id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var ihale = await _ihaleService.GetByIdAsync(id);
+                if (ihale == null)
+                {
+                    return NotFound();
+                }
+                return View(ihale);
             }
-
-            var ihale = await _context.Ihaleler
-                .Include(i => i.IhaleDetaylari)
-                .Include(i => i.IhaleTeklifleri)
-                .Include(i => i.IhaleKategorileri)
-                    .ThenInclude(ik => ik.Kategori)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (ihale == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "İhale detayı görüntülenirken hata oluştu. ID: {IhaleId}", id);
+                return RedirectToAction("Error", "Home");
             }
-
-            return View(ihale);
         }
 
-        // GET: Ihale/Create
+        // Yeni ihale formu (GET)
         public IActionResult Create()
         {
-            ViewBag.Kategoriler = _context.Kategoriler.Where(k => k.AktifMi).ToList();
-            return View();
+            return View(new Ihale
+            {
+                IhaleBaslangicTarihi = DateTime.Now,
+                IhaleBitisTarihi = DateTime.Now.AddDays(7),
+                IhaleDurumu = "Aktif"
+            });
         }
 
-        // POST: Ihale/Create
+        // Yeni ihale oluştur (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("IhaleAdi,IhaleKurumu,KesifBedeli,IhaleBaslangicTarihi,IhaleBitisTarihi,IhaleTuru,Aciklama,IhaleLinki,IhaleNumarasi,IletisimBilgileri,IhaleUsulu")] Ihale ihale, int[] selectedKategoriler)
+        public async Task<IActionResult> Create(Ihale ihale)
         {
-            if (ModelState.IsValid)
+            try
             {
-                ihale.KayitTarihi = DateTime.Now;
-                ihale.KaydedenKullanici = User.Identity.Name ?? "Sistem";
-                ihale.IhaleDurumu = "Aktif";
-
-                _context.Add(ihale);
-                await _context.SaveChangesAsync();
-
-                // Kategori ilişkileri ekle
-                if (selectedKategoriler != null && selectedKategoriler.Length > 0)
+                if (ModelState.IsValid)
                 {
-                    foreach (var kategoriId in selectedKategoriler)
-                    {
-                        var ihaleKategori = new IhaleKategori
-                        {
-                            IhaleId = ihale.Id,
-                            KategoriId = kategoriId,
-                            KayitTarihi = DateTime.Now
-                        };
-                        _context.IhaleKategorileri.Add(ihaleKategori);
-                    }
-                    await _context.SaveChangesAsync();
+                    await _ihaleService.CreateAsync(ihale);
+                    return RedirectToAction(nameof(Index));
                 }
-
-                TempData["Success"] = "İhale başarıyla oluşturuldu.";
-                return RedirectToAction(nameof(Index));
+                return View(ihale);
             }
-
-            ViewBag.Kategoriler = _context.Kategoriler.Where(k => k.AktifMi).ToList();
-            return View(ihale);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "İhale oluşturulurken hata oluştu.");
+                ModelState.AddModelError("", "Kayıt sırasında bir hata oluştu.");
+                return View(ihale);
+            }
         }
 
-        // GET: Ihale/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        // İhale düzenleme formu (GET)
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var ihale = await _ihaleService.GetByIdAsync(id);
+                if (ihale == null)
+                {
+                    return NotFound();
+                }
+                return View(ihale);
             }
-
-            var ihale = await _context.Ihaleler
-                .Include(i => i.IhaleKategorileri)
-                .FirstOrDefaultAsync(i => i.Id == id);
-
-            if (ihale == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "İhale düzenleme formu yüklenirken hata oluştu. ID: {IhaleId}", id);
+                return RedirectToAction("Error", "Home");
             }
-
-            ViewBag.Kategoriler = _context.Kategoriler.Where(k => k.AktifMi).ToList();
-            ViewBag.SelectedKategoriler = ihale.IhaleKategorileri.Select(ik => ik.KategoriId).ToArray();
-
-            return View(ihale);
         }
 
-        // POST: Ihale/Edit/5
+        // İhaleyi güncelle (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,IhaleAdi,IhaleKurumu,KesifBedeli,IhaleBaslangicTarihi,IhaleBitisTarihi,IhaleTuru,Aciklama,IhaleLinki,IhaleNumarasi,IletisimBilgileri,IhaleUsulu,IhaleDurumu")] Ihale ihale, int[] selectedKategoriler)
+        public async Task<IActionResult> Edit(int id, Ihale ihale)
         {
             if (id != ihale.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            try
             {
-                try
+                if (ModelState.IsValid)
                 {
-                    var existingIhale = await _context.Ihaleler
-                        .Include(i => i.IhaleKategorileri)
-                        .FirstOrDefaultAsync(i => i.Id == id);
-
-                    if (existingIhale == null)
-                    {
-                        return NotFound();
-                    }
-
-                    // Mevcut özellikleri güncelle
-                    existingIhale.IhaleAdi = ihale.IhaleAdi;
-                    existingIhale.IhaleKurumu = ihale.IhaleKurumu;
-                    existingIhale.KesifBedeli = ihale.KesifBedeli;
-                    existingIhale.IhaleBaslangicTarihi = ihale.IhaleBaslangicTarihi;
-                    existingIhale.IhaleBitisTarihi = ihale.IhaleBitisTarihi;
-                    existingIhale.IhaleTuru = ihale.IhaleTuru;
-                    existingIhale.Aciklama = ihale.Aciklama;
-                    existingIhale.IhaleLinki = ihale.IhaleLinki;
-                    existingIhale.IhaleNumarasi = ihale.IhaleNumarasi;
-                    existingIhale.IletisimBilgileri = ihale.IletisimBilgileri;
-                    existingIhale.IhaleUsulu = ihale.IhaleUsulu;
-                    existingIhale.IhaleDurumu = ihale.IhaleDurumu;
-                    existingIhale.GuncellemeTarihi = DateTime.Now;
-                    existingIhale.GuncelleyenKullanici = User.Identity.Name ?? "Sistem";
-
-                    // Mevcut kategori ilişkilerini sil
-                    _context.IhaleKategorileri.RemoveRange(existingIhale.IhaleKategorileri);
-
-                    // Yeni kategori ilişkilerini ekle
-                    if (selectedKategoriler != null && selectedKategoriler.Length > 0)
-                    {
-                        foreach (var kategoriId in selectedKategoriler)
-                        {
-                            var ihaleKategori = new IhaleKategori
-                            {
-                                IhaleId = existingIhale.Id,
-                                KategoriId = kategoriId,
-                                KayitTarihi = DateTime.Now
-                            };
-                            _context.IhaleKategorileri.Add(ihaleKategori);
-                        }
-                    }
-
-                    await _context.SaveChangesAsync();
-                    TempData["Success"] = "İhale başarıyla güncellendi.";
+                    await _ihaleService.UpdateAsync(ihale);
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!IhaleExists(ihale.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return View(ihale);
             }
-
-            ViewBag.Kategoriler = _context.Kategoriler.Where(k => k.AktifMi).ToList();
-            ViewBag.SelectedKategoriler = selectedKategoriler;
-            return View(ihale);
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogError(ex, "İhale güncellenirken çakışma hatası. ID: {IhaleId}", id);
+                ModelState.AddModelError("", "Kayıt başka bir kullanıcı tarafından değiştirildi.");
+                return View(ihale);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "İhale güncellenirken hata oluştu. ID: {IhaleId}", id);
+                ModelState.AddModelError("", "Güncelleme sırasında bir hata oluştu.");
+                return View(ihale);
+            }
         }
 
-        // GET: Ihale/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // İhale silme onay formu (GET)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id == null)
+            try
             {
-                return NotFound();
+                var ihale = await _ihaleService.GetByIdAsync(id);
+                if (ihale == null)
+                {
+                    return NotFound();
+                }
+                return View(ihale);
             }
-
-            var ihale = await _context.Ihaleler
-                .Include(i => i.IhaleKategorileri)
-                    .ThenInclude(ik => ik.Kategori)
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (ihale == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "İhale silme onay formu yüklenirken hata oluştu. ID: {IhaleId}", id);
+                return RedirectToAction("Error", "Home");
             }
-
-            return View(ihale);
         }
 
-        // POST: Ihale/Delete/5
+        // İhaleyi sil (POST)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var ihale = await _context.Ihaleler.FindAsync(id);
-            if (ihale != null)
+            try
             {
-                _context.Ihaleler.Remove(ihale);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "İhale başarıyla silindi.";
+                await _ihaleService.DeleteAsync(id);
+                return RedirectToAction(nameof(Index));
             }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // API Methods
-        [HttpGet]
-        public async Task<IActionResult> GetIhaleDetaylari(int ihaleId)
-        {
-            var detaylar = await _context.IhaleDetaylari
-                .Where(d => d.IhaleId == ihaleId)
-                .ToListAsync();
-
-            return Json(detaylar);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddIhaleDetay([FromBody] IhaleDetay detay)
-        {
-            if (ModelState.IsValid)
+            catch (Exception ex)
             {
-                detay.ToplamTutar = detay.BirimFiyat * detay.Miktar;
-                detay.KayitTarihi = DateTime.Now;
-
-                _context.IhaleDetaylari.Add(detay);
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "Detay başarıyla eklendi." });
+                _logger.LogError(ex, "İhale silinirken hata oluştu. ID: {IhaleId}", id);
+                return RedirectToAction("Error", "Home");
             }
-
-            return Json(new { success = false, message = "Geçersiz veri." });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UpdateIhaleDurumu(int id, string durum)
+        // Duruma göre filtreleme
+        public async Task<IActionResult> FilterByStatus(IhaleDurumu durum)
         {
-            var ihale = await _context.Ihaleler.FindAsync(id);
-            if (ihale != null)
+            try
             {
-                ihale.IhaleDurumu = durum;
-                ihale.GuncellemeTarihi = DateTime.Now;
-                ihale.GuncelleyenKullanici = User.Identity.Name ?? "Sistem";
-
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Durum başarıyla güncellendi." });
+                var ihaleler = await _ihaleService.GetByDurumAsync(durum);
+                return View("Index", ihaleler);
             }
-
-            return Json(new { success = false, message = "İhale bulunamadı." });
-        }
-
-        private bool IhaleExists(int id)
-        {
-            return _context.Ihaleler.Any(e => e.Id == id);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "İhaleler duruma göre filtrelenirken hata oluştu. Durum: {Durum}", durum);
+                return RedirectToAction("Error", "Home");
+            }
         }
     }
 }

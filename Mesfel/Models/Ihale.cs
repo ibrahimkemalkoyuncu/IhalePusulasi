@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mesfel.Utilities;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -29,7 +30,7 @@ namespace Mesfel.Models
 
         [Required]
         [StringLength(100)]
-        public string IhaleTuru { get; set; }
+        public IhaleTuru IhaleTuru { get; set; }
 
         [StringLength(1000)]
         public string Aciklama { get; set; }
@@ -59,9 +60,26 @@ namespace Mesfel.Models
         [StringLength(100)]
         public string GuncelleyenKullanici { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal YaklasikMaliyet { get; set; }  // Eksik olan property
+
+        [Required]
+        public DateTime TeklifSonTarihi { get; set; }  // Tekliflerin son verilebileceği tarih
+
+
+
         // Navigation properties
+
+
         public virtual ICollection<IhaleDetay> IhaleDetaylari { get; set; }
         public virtual ICollection<IhaleTeklif> IhaleTeklifleri { get; set; }
         public virtual ICollection<IhaleKategori> IhaleKategorileri { get; set; }
+
+        // Navigation property for analysis
+        public virtual ICollection<IhaleAnaliz> IhaleAnalizleri { get; set; } = new List<IhaleAnaliz>();
+
+        // Navigation properties
+        public virtual ICollection<IhaleKalemi> IhaleKalemleri { get; set; } = new List<IhaleKalemi>();
+
     }
 }

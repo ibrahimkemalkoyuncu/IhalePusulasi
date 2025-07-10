@@ -1,6 +1,6 @@
 using Mesfel.Data;
 using Mesfel.Models;
-using Mesfel.Sabitler;
+using Mesfel.Utilities;
 using Mesfel.Services;
 using Mesfel.ViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -32,15 +32,15 @@ namespace Mesfel.Controllers
             {
                 // Son ihaleler
                 var sonIhaleler = await _context.Ihaleler
-                    .Include(i => i.Teklifler)
-                    .OrderByDescending(i => i.OlusturulmaTarihi)
+                    .Include(i => i.IhaleTeklifleri)
+                    .OrderByDescending(i => i.KayitTarihi)
                     .Take(5)
                     .ToListAsync();
 
                 // Aktif ihaleler
                 var aktifIhaleler = await _context.Ihaleler
-                    .Where(i => i.IhaleDurumu == IhaleDurumu.TeklifAlma || i.IhaleDurumu == IhaleDurumu.IlanEdildi)
-                    .Include(i => i.Teklifler)
+                        .Where(i => i.IhaleDurumu == nameof(IhaleDurumu.TeklifAlma) || i.IhaleDurumu == nameof(IhaleDurumu.IlanEdildi))
+                    .Include(i => i.IhaleTeklifleri)
                     .ToListAsync();
 
                 // Genel istatistikler
@@ -71,9 +71,9 @@ namespace Mesfel.Controllers
             try
             {
                 var ihale = await _context.Ihaleler
-                    .Include(i => i.Teklifler)
+                    .Include(i => i.IhaleTeklifleri)
                     .Include(i => i.IhaleKalemleri)
-                    .FirstOrDefaultAsync(i => i.IhaleId == id);
+                    .FirstOrDefaultAsync(i => i.Id  == id);
 
                 if (ihale == null)
                 {
@@ -114,8 +114,8 @@ namespace Mesfel.Controllers
             try
             {
                 var ihale = await _context.Ihaleler
-                    .Include(i => i.Teklifler)
-                    .FirstOrDefaultAsync(i => i.IhaleId == id);
+                    .Include(i => i.IhaleTeklifleri)
+                    .FirstOrDefaultAsync(i => i.Id == id);
 
                 if (ihale == null)
                 {
@@ -148,14 +148,14 @@ namespace Mesfel.Controllers
                 if (!ModelState.IsValid)
                 {
                     var ihale = await _context.Ihaleler
-                        .Include(i => i.Teklifler)
-                        .FirstOrDefaultAsync(i => i.IhaleId == model.Ihale.IhaleId);
+                        .Include(i => i.IhaleTeklifleri)
+                        .FirstOrDefaultAsync(i => i.Id == model.Ihale.Id);
                     model.Ihale = ihale!;
                     return View(model);
                 }
 
                 // Optimal teklif hesapla
-                var optimalSonuc = await _ihaleHesaplamaService.OptimalTeklifHesaplaAsync(model.Ihale.IhaleId, model.HedefKarOrani);
+                var optimalSonuc = await _ihaleHesaplamaService.OptimalTeklifHesaplaAsync(model.Ihale.Id, model.HedefKarOrani);
 
                 // Kesin teminat hesapla
                 var kesinTeminat = await _ihaleHesaplamaService.KesinTeminatHesaplaAsync(optimalSonuc.OptimalTeklifTutari, 6.0);
@@ -167,7 +167,7 @@ namespace Mesfel.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Optimal teklif hesaplanýrken hata oluþtu. Ýhale ID: {IhaleId}", model.Ihale.IhaleId);
+                _logger.LogError(ex, "Optimal teklif hesaplanýrken hata oluþtu. Ýhale ID: {Id}", model.Ihale.Id);
                 ModelState.AddModelError("", "Hesaplama sýrasýnda bir hata oluþtu. Lütfen tekrar deneyin.");
                 return View(model);
             }
@@ -181,8 +181,8 @@ namespace Mesfel.Controllers
             try
             {
                 var ihale = await _context.Ihaleler
-                    .Include(i => i.Teklifler)
-                    .FirstOrDefaultAsync(i => i.IhaleId == id);
+                    .Include(i => i.IhaleTeklifleri)
+                    .FirstOrDefaultAsync(i => i.Id == id);
 
                 if (ihale == null)
                 {

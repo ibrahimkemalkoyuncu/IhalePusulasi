@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Mesfel.Utilities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Mesfel.Models
@@ -70,8 +71,24 @@ namespace Mesfel.Models
         [Column(TypeName = "decimal(5,2)")]
         public decimal? TasarrufOrani { get; set; }
 
+        [Display(Name = "Standart Sapma")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal StandartSapma { get; set; }
+
+        [Display(Name = "Tahmin Edilen Kazanan Teklif")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TahminEdilenKazananTeklif { get; set; }
+
+
+        [Display(Name = "Rekabet Seviyesi")]
+        public RekabetSeviyesi RekabetSeviyesi { get; set; }
+
+
         // Navigation Property
         [ForeignKey("IhaleId")]
         public virtual Ihale Ihale { get; set; } = null!;
+
+
+        public List<IhaleTeklif> IhaleTeklifler { get; set; } = new List<IhaleTeklif>();
     }
 }

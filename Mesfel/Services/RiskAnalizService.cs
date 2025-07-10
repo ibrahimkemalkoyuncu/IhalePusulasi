@@ -1,5 +1,5 @@
 ﻿using Mesfel.Models;
-using Mesfel.Sabitler;
+using Mesfel.Utilities;
 
 namespace Mesfel.Services
 {
@@ -43,7 +43,7 @@ namespace Mesfel.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Risk analizi yapılırken hata oluştu. İhale ID: {IhaleId}", ihale.IhaleId);
+                _logger.LogError(ex, "Risk analizi yapılırken hata oluştu. İhale ID: {Id}", ihale.Id);
                 throw;
             }
         }
@@ -70,7 +70,7 @@ namespace Mesfel.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Aşırı düşük kalma olasılığı hesaplanırken hata oluştu. İhale ID: {IhaleId}", ihale.IhaleId);
+                _logger.LogError(ex, "Aşırı düşük kalma olasılığı hesaplanırken hata oluştu. İhale ID: {Id}", ihale.Id);
                 return 0;
             }
         }
@@ -86,14 +86,14 @@ namespace Mesfel.Services
                     return 0;
 
                 // Ortalamanın üzerindeki tekliflerin oranı
-                decimal ustundekiTeklifler = analiz.Teklifler.Count(t => t.TeklifTutari > teklifTutari);
+                decimal ustundekiTeklifler = analiz.IhaleTeklifler.Count(t => t.TeklifTutari > teklifTutari);
                 decimal oran = (ustundekiTeklifler / analiz.ToplamTeklifSayisi) * 100;
 
                 return Math.Round(oran, 2);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Üstünde kalma olasılığı hesaplanırken hata oluştu. İhale ID: {IhaleId}", ihale.IhaleId);
+                _logger.LogError(ex, "Üstünde kalma olasılığı hesaplanırken hata oluştu. İhale ID: {Id}", ihale.Id);
                 return 0;
             }
         }
@@ -101,6 +101,31 @@ namespace Mesfel.Services
         /// <summary>
         /// Monte Carlo simülasyonu ile farklı senaryoları analiz eder
         /// </summary>
+        //public List<RiskSenaryo> MonteCarloSimulasyonu(Ihale ihale, IhaleAnaliz analiz, int simulasyonSayisi = 1000)
+        //{
+        //    var senaryolar = new List<RiskSenaryo>();
+        //    var random = new Random();
+
+        //    for (int i = 0; i < simulasyonSayisi; i++)
+        //    {
+        //        // Normal dağılıma göre rastgele teklif üret
+        //        double randomNormal = BoxMullerTransform(random.NextDouble(), random.NextDouble());
+        //        decimal rastgeleTeklif = analiz.OrtalamaTeklif + (decimal)(randomNormal * (double)analiz.StandartSapma);
+
+        //        var senaryo = new RiskSenaryo
+        //        {
+        //            SenaryoNo = i + 1,
+        //            RastgeleTeklif = Math.Round(rastgeleTeklif, 2),
+        //            AsiriDusuk = rastgeleTeklif < _kamuIhaleHesaplama.AsiriDusukTeklifSiniriHesapla(ihale, analiz),
+        //            KazanmaDurumu = rastgeleTeklif < analiz.TahminEdilenKazananTeklif
+        //        };
+
+        //        senaryolar.Add(senaryo);
+        //    }
+
+        //    return senaryolar;
+        //}
+
         public List<RiskSenaryo> MonteCarloSimulasyonu(Ihale ihale, IhaleAnaliz analiz, int simulasyonSayisi = 1000)
         {
             var senaryolar = new List<RiskSenaryo>();
@@ -117,7 +142,9 @@ namespace Mesfel.Services
                     SenaryoNo = i + 1,
                     RastgeleTeklif = Math.Round(rastgeleTeklif, 2),
                     AsiriDusuk = rastgeleTeklif < _kamuIhaleHesaplama.AsiriDusukTeklifSiniriHesapla(ihale, analiz),
-                    KazanmaDurumu = rastgeleTeklif < analiz.TahminEdilenKazananTeklif
+                    KazanmaDurumu = analiz.KazananTeklif.HasValue ?
+                                   rastgeleTeklif < analiz.KazananTeklif.Value :
+                                   rastgeleTeklif < analiz.OrtalamaTeklif
                 };
 
                 senaryolar.Add(senaryo);

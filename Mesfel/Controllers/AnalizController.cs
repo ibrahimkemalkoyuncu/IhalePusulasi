@@ -1,5 +1,5 @@
 ﻿using Mesfel.Models;
-using Mesfel.Sabitler;
+using Mesfel.Utilities;
 using Mesfel.Services;
 using Mesfel.ViewModel;
 using Microsoft.AspNetCore.Mvc;

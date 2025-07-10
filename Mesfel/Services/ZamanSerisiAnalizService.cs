@@ -1,6 +1,6 @@
 ﻿using Mesfel.Data;
 using Mesfel.Models;
-using Mesfel.Sabitler;
+using Mesfel.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -22,15 +22,15 @@ namespace Mesfel.Services
             try
             {
                 var ihale = await _context.Ihaleler
-                    .Include(i => i.Teklifler)
-                    .FirstOrDefaultAsync(i => i.IhaleId == ihaleId);
+                    .Include(i => i.IhaleTeklifleri)
+                    .FirstOrDefaultAsync(i => i.Id == ihaleId);
 
                 if (ihale == null)
                 {
                     throw new ArgumentException("İhale bulunamadı", nameof(ihaleId));
                 }
 
-                var teklifler = ihale.Teklifler
+                var teklifler = ihale.IhaleTeklifleri
                     .OrderBy(t => t.TeklifTarihi)
                     .ToList();
 
@@ -91,14 +91,14 @@ namespace Mesfel.Services
             try
             {
                 var ihaleler = await _context.Ihaleler
-                    .Include(i => i.Teklifler)
+                    .Include(i => i.IhaleTeklifleri)
                     .Include(i => i.IhaleAnalizleri)
                     .Where(i => ihaleTuru == null || i.IhaleTuru == ihaleTuru)
-                    .OrderBy(i => i.IhaleTarihi)
+                    .OrderBy(i => i.IhaleBaslangicTarihi)
                     .ToListAsync();
 
                 var aylikGruplar = ihaleler
-                    .GroupBy(i => new { i.IhaleTarihi.Year, i.IhaleTarihi.Month })
+                    .GroupBy(i => new { i.IhaleBaslangicTarihi.Year, i.IhaleBaslangicTarihi.Month })
                     .OrderBy(g => g.Key.Year)
                     .ThenBy(g => g.Key.Month)
                     .ToList();
@@ -113,14 +113,14 @@ namespace Mesfel.Services
                         Yil = grup.Key.Year,
                         Ay = grup.Key.Month,
                         IhaleSayisi = grupIhaleler.Count,
-                        OrtalamaTeklifSayisi = grupIhaleler.Average(i => i.Teklifler.Count),
+                        OrtalamaTeklifSayisi = grupIhaleler.Average(i => i.IhaleTeklifleri.Count),
                         OrtalamaTeklifTutari = grupIhaleler
-                            .SelectMany(i => i.Teklifler)
+                            .SelectMany(i => i.IhaleTeklifleri)
                             .Average(t => t.TeklifTutari),
                         OrtalamaRekabetSeviyesi = grupIhaleler
                             .Select(i => i.IhaleAnalizleri.OrderByDescending(a => a.AnalizTarihi).FirstOrDefault())
                             .Where(a => a != null)
-                            .Average(a => a.RekabetSeviyesi)
+                            .Average(a => (int)a.RekabetSeviyesi) // Enum'ı int'e çevirerek ortalama alıyoruz
                     };
 
                     trendAnalizleri.Add(analiz);

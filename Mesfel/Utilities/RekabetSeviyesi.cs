@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Mesfel.Sabitler
+namespace Mesfel.Utilities
 {
-    public enum RiskSeviyesi
+    public enum RekabetSeviyesi
     {
         [Display(Name = "Düşük")]
         Dusuk = 1,

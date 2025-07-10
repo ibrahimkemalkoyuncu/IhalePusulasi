@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Mesfel.Sabitler
+namespace Mesfel.Utilities
 {
     // İhale Durumu Enum
     public enum IhaleDurumu

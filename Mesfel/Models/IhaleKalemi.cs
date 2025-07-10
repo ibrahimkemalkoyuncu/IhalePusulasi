@@ -30,14 +30,17 @@ namespace Mesfel.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal BirimFiyat { get; set; }
 
+        // Buraya [NotMapped] özniteliğini ekleyin
+        [NotMapped]
         [Display(Name = "Toplam Fiyat (TL)")]
-        [Column(TypeName = "decimal(18,2)")]
+        // You can remove the [Column(TypeName = "decimal(18,2)")] if you want, as it's now redundant
         public decimal ToplamFiyat => Miktar * BirimFiyat;
 
         [Display(Name = "Açıklama")]
         public string? Aciklama { get; set; }
 
-        // Navigation Properties
-        public virtual Ihale Ihale { get; set; } = null!;
+        // Navigation property
+        [ForeignKey("IhaleId")]
+        public virtual Ihale Ihale { get; set; }
     }
 }

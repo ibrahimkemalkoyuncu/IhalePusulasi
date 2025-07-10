@@ -1,4 +1,6 @@
-﻿namespace Mesfel.Models
+﻿using Mesfel.Utilities;
+
+namespace Mesfel.Models
 {
     public class RiskAnalizSonucu
     {

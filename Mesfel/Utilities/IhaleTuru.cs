@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Mesfel.Sabitler
+namespace Mesfel.Utilities
 {
     // İhale Türü Enum
     public enum IhaleTuru

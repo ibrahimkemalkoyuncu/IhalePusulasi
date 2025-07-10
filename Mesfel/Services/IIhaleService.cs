@@ -1,5 +1,5 @@
 ﻿using Mesfel.Models;
-using Mesfel.Sabitler;
+using Mesfel.Utilities;
 
 namespace Mesfel.Services
 {
@@ -13,5 +13,7 @@ namespace Mesfel.Services
         Task<IEnumerable<Ihale>> GetByDurumAsync(IhaleDurumu durum);
         Task<IEnumerable<Ihale>> SearchAsync(string searchTerm);
         Task<bool> IhaleNumarasiExistsAsync(string ihaleNumarasi, int? excludeId = null);
+
+        Task<IEnumerable<Ihale>> GetIhalelerAsync();
     }
 }
