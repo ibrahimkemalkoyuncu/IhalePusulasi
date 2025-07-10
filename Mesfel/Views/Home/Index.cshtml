@@ -1,126 +1,447 @@
-﻿@model Mesfel.ViewModel.DashboardViewModel
-
+﻿@model DashboardViewModel
 @{
-    ViewData["Title"] = "Ana Sayfa";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="container">
-    <h1 class="mb-4">İhale Yönetim Paneli</h1>
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+            Dashboard
+        </h1>
+        <p class="text-muted">İhale analiz sistemi genel durumu</p>
+    </div>
+    <div>
+        <button class="btn btn-primary" onclick="refreshDashboard()">
+            <i class="fas fa-sync-alt me-2"></i>
+            Yenile
+        </button>
+    </div>
+</div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        @foreach (var istatistik in Model.Istatistikler)
-        {
-            <div class="col-md-3">
-                <div class="card text-white @GetCardColor(istatistik.Baslik)">
-                    <div class="card-body">
-                        <h5 class="card-title">@istatistik.Baslik</h5>
-                        <p class="card-text display-4">@istatistik.Deger</p>
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Toplam İhale
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @(Model?.AktifIhaleler.Count() ?? 0)
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
-        }
-    </div>
-
-    <!-- Active Tenders -->
-    <div class="card mb-4">
-        <div class="card-header bg-dark text-white">
-            <h5>Aktif İhaleler</h5>
-        </div>
-        <div class="card-body">
-            @if (Model.AktifIhaleler.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>İhale No</th>
-                                <th>İhale Adı</th>
-                                <th>Başlangıç Tarihi</th>
-                                <th>Bitiş Tarihi</th>
-                                <th>Teklif Sayısı</th>
-                                <th>İşlemler</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var ihale in Model.AktifIhaleler)
-                            {
-                                <tr>
-                                    <td>@ihale.IhaleNo</td>
-                                    <td>@ihale.IhaleAdi</td>
-                                    <td>@ihale.IhaleBaslangicTarihi.ToShortDateString()</td>
-                                    <td>@ihale.IhaleBitisTarihi.ToShortDateString()</td>
-                                    <td>@ihale.IhaleTeklifleri.Count</td>
-                                    <td>
-                                        <a asp-action="IhaleDetay" asp-route-id="@ihale.Id" class="btn btn-sm btn-info">Detay</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-            else
-            {
-                <div class="alert alert-info">Aktif ihale bulunmamaktadır.</div>
-            }
         </div>
     </div>
 
-    <!-- Recent Tenders -->
-    <div class="card">
-        <div class="card-header bg-secondary text-white">
-            <h5>Son İhaleler</h5>
-        </div>
-        <div class="card-body">
-            @if (Model.SonIhaleler.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>İhale No</th>
-                                <th>İhale Adı</th>
-                                <th>Durum</th>
-                                <th>Kayıt Tarihi</th>
-                                <th>İşlemler</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var ihale in Model.SonIhaleler)
-                            {
-                                <tr>
-                                    <td>@ihale.IhaleNo</td>
-                                    <td>@ihale.IhaleAdi</td>
-                                    <td><span class="badge badge-info">@ihale.IhaleDurumu</span></td>
-                                    <td>@ihale.KayitTarihi.ToShortDateString()</td>
-                                    <td>
-                                        <a asp-action="IhaleDetay" asp-route-id="@ihale.Id" class="btn btn-sm btn-outline-primary">Detay</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Aktif İhale
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @(Model?.AktifIhaleler.Count() ?? 0)
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
                 </div>
-            }
-            else
-            {
-                <div class="alert alert-info">Kayıtlı ihale bulunmamaktadır.</div>
-            }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Toplam Teklif
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @* @(Model?.ToplamTeklif ?? 0) *@
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-hand-holding-usd fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Toplam Değer
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @* @(Model?.ToplamDeger?.ToString("C") ?? "₺0") *@
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-@functions {
-    string GetCardColor(string baslik)
-    {
-        return baslik switch
-        {
-            "Toplam İhale" => "bg-primary",
-            "Aktif İhale" => "bg-success",
-            "Tamamlananlar" => "bg-info",
-            "Ort. Teklif Farkı" => "bg-warning",
-            _ => "bg-secondary"
-        };
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- İhale Trend Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-line me-2"></i>
+                    İhale Trend Analizi
+                </h6>
+                <div class="dropdown no-arrow">
+                    <select class="form-select" id="trendPeriod" onchange="updateTrendChart()">
+                        <option value="7">Son 7 Gün</option>
+                        <option value="30" selected>Son 30 Gün</option>
+                        <option value="90">Son 90 Gün</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="trendChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kategori Distribution -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Kategori Dağılımı
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities & Top Tenders -->
+<div class="row">
+    <!-- Recent Activities -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-clock me-2"></i>
+                    Son Aktiviteler
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    @if (Model?.AktifIhaleler != null)
+                    {
+                        @foreach (var aktivite in Model.AktifIhaleler)
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">@aktivite.IhaleAdi</h6>
+                                    <p class="timeline-text">@aktivite.Aciklama</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        @aktivite.KayitTarihi.ToString("dd.MM.yyyy HH:mm")
+                                    </small>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">Henüz aktivite bulunmuyor.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Tenders -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-star me-2"></i>
+                    Öne Çıkan İhaleler
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (Model?.AktifIhaleler != null)
+                {
+                    @foreach (var ihale in Model.AktifIhaleler)
+                    {
+                        <div class="media mb-3">
+                            <div class="media-body">
+                                <h6 class="mt-0 mb-1">
+                                    <a href="/Ihale/Details/@ihale.Id" class="text-decoration-none">
+                                        @ihale.IhaleAdi
+                                    </a>
+                                </h6>
+                                <p class="text-muted small mb-1">@ihale.Aciklama</p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-success">
+                                        <i class="fas fa-money-bill-wave me-1"></i>
+                                        @ihale.YaklasikMaliyet.ToString("C")
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        @ihale.IhaleBitisTarihi.ToString("dd.MM.yyyy")
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                    }
+                }
+                else
+                {
+                    <p class="text-muted text-center">Henüz ihale bulunmuyor.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Analysis Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Risk Analizi Özeti
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="risk-indicator risk-low">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <h4>@(Model?.DusukRisk ?? 0)</h4>
+                            <p class="text-muted">Düşük Risk</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="risk-indicator risk-medium">
+                            <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                            <h4>@(Model?.OrtaRisk ?? 0)</h4>
+                            <p class="text-muted">Orta Risk</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="risk-indicator risk-high">
+                            <i class="fas fa-times-circle fa-2x mb-2"></i>
+                            <h4>@(Model?.YuksekRisk ?? 0)</h4>
+                            <p class="text-muted">Yüksek Risk</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <a href="/Analiz/Risk" class="btn btn-outline-primary">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Detaylı Analiz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
     }
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -35px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        background: #4e73df;
+        border-radius: 50%;
+    }
+
+    .timeline-marker::before {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 10px;
+        width: 2px;
+        height: 40px;
+        background: #e3e6f0;
+        z-index: -1;
+    }
+
+    .timeline-item:last-child .timeline-marker::before {
+        display: none;
+    }
+
+    .risk-indicator {
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .risk-low {
+        background-color: rgba(28, 200, 138, 0.1);
+        color: #1cc88a;
+    }
+
+    .risk-medium {
+        background-color: rgba(246, 194, 62, 0.1);
+        color: #f6c23e;
+    }
+
+    .risk-high {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+    }
+
+    .chart-area {
+        position: relative;
+        height: 300px;
+    }
+
+    .chart-pie {
+        position: relative;
+        height: 300px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Trend Chart
+        var trendCtx = document.getElementById('trendChart').getContext('2d');
+        var trendChart = new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['1 Haf', '2 Haf', '3 Haf', '4 Haf', '5 Haf', '6 Haf', '7 Haf'],
+                datasets: [{
+                    label: 'İhale Sayısı',
+                    data: [12, 19, 3, 5, 2, 3, 7],
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Category Chart
+        var categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        var categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Yapı', 'Hizmet', 'Mal', 'Danışmanlık'],
+                datasets: [{
+                    data: [35, 25, 25, 15],
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                    hoverBackgroundColor: ['#2653d4', '#17a673', '#2c9faf', '#dda20a'],
+                    borderWidth: 3,
+                    borderColor: 'white'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        function refreshDashboard() {
+            location.reload();
+        }
+
+        function updateTrendChart() {
+            var period = document.getElementById('trendPeriod').value;
+            // AJAX call to update chart data
+            // Implementation needed based on your backend
+        }
+
+        // Auto refresh every 5 minutes
+        setInterval(function() {
+            refreshDashboard();
+        }, 300000);
+    </script>
 }

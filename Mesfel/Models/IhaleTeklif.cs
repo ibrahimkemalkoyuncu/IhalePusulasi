@@ -39,7 +39,7 @@ namespace Mesfel.Models
         public decimal GenelToplam => TeklifTutari + KdvTutari;
 
         [Display(Name = "Teklif Durumu")]
-        public TeklifDurumu TeklifDurumu { get; set; } = TeklifDurumu.Verildi; // Doğru kullanım
+        public TeklifDurumu? TeklifDurumu { get; set; }
 
         [Display(Name = "Teklif Tarihi")]
         public DateTime TeklifTarihi { get; set; } = DateTime.Now;
