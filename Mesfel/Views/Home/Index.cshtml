@@ -1,8 +1,126 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model Mesfel.ViewModel.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Ana Sayfa";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container">
+    <h1 class="mb-4">İhale Yönetim Paneli</h1>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        @foreach (var istatistik in Model.Istatistikler)
+        {
+            <div class="col-md-3">
+                <div class="card text-white @GetCardColor(istatistik.Baslik)">
+                    <div class="card-body">
+                        <h5 class="card-title">@istatistik.Baslik</h5>
+                        <p class="card-text display-4">@istatistik.Deger</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Active Tenders -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5>Aktif İhaleler</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.AktifIhaleler.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>İhale No</th>
+                                <th>İhale Adı</th>
+                                <th>Başlangıç Tarihi</th>
+                                <th>Bitiş Tarihi</th>
+                                <th>Teklif Sayısı</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ihale in Model.AktifIhaleler)
+                            {
+                                <tr>
+                                    <td>@ihale.IhaleNo</td>
+                                    <td>@ihale.IhaleAdi</td>
+                                    <td>@ihale.IhaleBaslangicTarihi.ToShortDateString()</td>
+                                    <td>@ihale.IhaleBitisTarihi.ToShortDateString()</td>
+                                    <td>@ihale.IhaleTeklifleri.Count</td>
+                                    <td>
+                                        <a asp-action="IhaleDetay" asp-route-id="@ihale.Id" class="btn btn-sm btn-info">Detay</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">Aktif ihale bulunmamaktadır.</div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Tenders -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5>Son İhaleler</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.SonIhaleler.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>İhale No</th>
+                                <th>İhale Adı</th>
+                                <th>Durum</th>
+                                <th>Kayıt Tarihi</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ihale in Model.SonIhaleler)
+                            {
+                                <tr>
+                                    <td>@ihale.IhaleNo</td>
+                                    <td>@ihale.IhaleAdi</td>
+                                    <td><span class="badge badge-info">@ihale.IhaleDurumu</span></td>
+                                    <td>@ihale.KayitTarihi.ToShortDateString()</td>
+                                    <td>
+                                        <a asp-action="IhaleDetay" asp-route-id="@ihale.Id" class="btn btn-sm btn-outline-primary">Detay</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">Kayıtlı ihale bulunmamaktadır.</div>
+            }
+        </div>
+    </div>
 </div>
+
+@functions {
+    string GetCardColor(string baslik)
+    {
+        return baslik switch
+        {
+            "Toplam İhale" => "bg-primary",
+            "Aktif İhale" => "bg-success",
+            "Tamamlananlar" => "bg-info",
+            "Ort. Teklif Farkı" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}

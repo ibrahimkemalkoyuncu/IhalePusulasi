@@ -10,6 +10,9 @@ namespace Mesfel.Models
         [Key]
         public int Id { get; set; }
 
+
+        public string IhaleNo { get; set; }
+
         [Required]
         [StringLength(500)]
         public string IhaleAdi { get; set; }

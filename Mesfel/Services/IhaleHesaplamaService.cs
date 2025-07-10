@@ -17,12 +17,15 @@ namespace Mesfel.Services
         }
 
         /// <summary>
-        /// İhale analiz sonuçlarını hesaplar
+        /// Belirtilen ihale ID'sine göre ihale analizi yapar
         /// </summary>
+        /// <param name="ihaleId">Analiz yapılacak ihale ID'si</param>
+        /// <returns>İhale analiz sonuçlarını içeren nesne</returns>
         public async Task<IhaleAnalizSonucu> IhaleAnalizYapAsync(int ihaleId)
         {
             try
             {
+                // İhaleyi veritabanından getir (teklifler ve kalemler dahil)
                 var ihale = await _context.Ihaleler
                     .Include(i => i.IhaleTeklifleri)
                     .Include(i => i.IhaleKalemleri)
@@ -31,8 +34,10 @@ namespace Mesfel.Services
                 if (ihale == null)
                     throw new ArgumentException("İhale bulunamadı");
 
+                // Sadece verilmiş teklifleri filtrele
                 var teklifler = ihale.IhaleTeklifleri.Where(t => t.TeklifDurumu == TeklifDurumu.Verildi).ToList();
 
+                // Analiz sonuçlarını oluştur
                 var sonuc = new IhaleAnalizSonucu
                 {
                     IhaleId = ihaleId,
@@ -59,12 +64,16 @@ namespace Mesfel.Services
         }
 
         /// <summary>
-        /// Optimal teklif hesaplar
+        /// Belirtilen kar oranına göre optimal teklif hesaplar
         /// </summary>
+        /// <param name="ihaleId">Hesaplama yapılacak ihale ID'si</param>
+        /// <param name="hedefKarOrani">Hedeflenen kar oranı (yüzde olarak)</param>
+        /// <returns>Optimal teklif sonuçlarını içeren nesne</returns>
         public async Task<OptimalTeklifSonucu> OptimalTeklifHesaplaAsync(int ihaleId, decimal hedefKarOrani)
         {
             try
             {
+                // İhaleyi ve tekliflerini getir
                 var ihale = await _context.Ihaleler
                     .Include(i => i.IhaleTeklifleri)
                     .FirstOrDefaultAsync(i => i.Id == ihaleId);
@@ -74,13 +83,14 @@ namespace Mesfel.Services
 
                 var teklifler = ihale.IhaleTeklifleri.Where(t => t.TeklifDurumu == TeklifDurumu.Verildi).ToList();
 
-                // Geçmiş verilerden trend analizi
+                // Benzer ihaleleri getir (türüne göre)
                 var benzerIhaleler = await _context.Ihaleler
                     .Include(i => i.IhaleTeklifleri)
                     .Where(i => i.IhaleTuru == ihale.IhaleTuru && i.Id != ihaleId)
                     .Take(10)
                     .ToListAsync();
 
+                // Optimal teklif sonuçlarını oluştur
                 var sonuc = new OptimalTeklifSonucu
                 {
                     IhaleId = ihaleId,
@@ -102,12 +112,15 @@ namespace Mesfel.Services
         }
 
         /// <summary>
-        /// Teklif karşılaştırması yapar
+        /// İhaleye verilen teklifleri karşılaştırır
         /// </summary>
+        /// <param name="ihaleId">Karşılaştırma yapılacak ihale ID'si</param>
+        /// <returns>Teklif karşılaştırma sonuçlarını içeren liste</returns>
         public async Task<List<TeklifKarsilastirma>> TeklifKarsilastirmaYapAsync(int ihaleId)
         {
             try
             {
+                // İhaleyi ve tekliflerini getir
                 var ihale = await _context.Ihaleler
                     .Include(i => i.IhaleTeklifleri)
                     .FirstOrDefaultAsync(i => i.Id == ihaleId);
@@ -115,9 +128,11 @@ namespace Mesfel.Services
                 if (ihale == null)
                     throw new ArgumentException("İhale bulunamadı");
 
+                // Sadece verilmiş teklifleri al
                 var teklifler = ihale.IhaleTeklifleri.Where(t => t.TeklifDurumu == TeklifDurumu.Verildi).ToList();
                 var karsilastirmaListesi = new List<TeklifKarsilastirma>();
 
+                // Her teklif için karşılaştırma verileri oluştur
                 foreach (var teklif in teklifler)
                 {
                     var karsilastirma = new TeklifKarsilastirma
@@ -134,7 +149,7 @@ namespace Mesfel.Services
                     karsilastirmaListesi.Add(karsilastirma);
                 }
 
-                // Sıralama ve fark hesaplama
+                // Teklifleri sırala ve fark yüzdelerini hesapla
                 var siraliListe = karsilastirmaListesi.OrderBy(k => k.TeklifTutari).ToList();
                 for (int i = 0; i < siraliListe.Count; i++)
                 {
@@ -155,19 +170,23 @@ namespace Mesfel.Services
         }
 
         /// <summary>
-        /// Geçici teminat hesaplar
+        /// Geçici teminat tutarını hesaplar
         /// </summary>
+        /// <param name="yaklasikMaliyet">İhalenin yaklaşık maliyeti</param>
+        /// <param name="ihaleTuru">İhale türü</param>
+        /// <returns>Geçici teminat hesaplama sonuçları</returns>
         public async Task<GecimiTeminatHesapla> GecimiTeminatHesaplaAsync(decimal yaklasikMaliyet, IhaleTuru ihaleTuru)
         {
             // 4734 sayılı Kamu İhale Kanunu'na göre geçici teminat oranları
             double teminatOrani = ihaleTuru switch
             {
-                IhaleTuru.YapimIsi => 0.02, // %2
-                IhaleTuru.MalAlimi => 0.015, // %1.5
-                IhaleTuru.HizmetAlimi => 0.015, // %1.5
-                _ => 0.02
+                IhaleTuru.YapimIsi => 0.02, // %2 (inşaat işleri)
+                IhaleTuru.MalAlimi => 0.015, // %1.5 (mal alımları)
+                IhaleTuru.HizmetAlimi => 0.015, // %1.5 (hizmet alımları)
+                _ => 0.02 // Diğer türler için varsayılan %2
             };
 
+            // Teminat tutarını hesapla
             var teminatTutari = yaklasikMaliyet * (decimal)teminatOrani;
 
             return new GecimiTeminatHesapla
@@ -181,10 +200,14 @@ namespace Mesfel.Services
         }
 
         /// <summary>
-        /// Kesin teminat hesaplar
+        /// Kesin teminat tutarını hesaplar
         /// </summary>
+        /// <param name="teklifTutari">Teklif edilen tutar</param>
+        /// <param name="teminatOrani">Teminat oranı (yüzde olarak)</param>
+        /// <returns>Kesin teminat hesaplama sonuçları</returns>
         public async Task<KesinTeminatHesapla> KesinTeminatHesaplaAsync(decimal teklifTutari, double teminatOrani)
         {
+            // Teminat tutarını hesapla (teklif tutarı x oran)
             var teminatTutari = teklifTutari * (decimal)(teminatOrani / 100);
 
             return new KesinTeminatHesapla
@@ -206,24 +229,53 @@ namespace Mesfel.Services
             try
             {
                 // Toplam ihale sayısı
-                var toplamIhale = await _context.Ihaleler.CountAsync();
-                istatistikler.Add(new IstatistikVeri { Baslik = "Toplam İhale", Deger = toplamIhale.ToString(), Tur = "Sayı" });
+                var toplamIhaleSayisi = await _context.Ihaleler.CountAsync();
+                istatistikler.Add(new IstatistikVeri
+                {
+                    Baslik = "Toplam İhale Sayısı",
+                    Deger = toplamIhaleSayisi.ToString(),
+                    Tur = "Genel"
+                });
 
                 // Aktif ihaleler
-                var aktifIhaleler = await _context.Ihaleler
-                        .CountAsync(i => i.IhaleDurumu == IhaleDurumu.TeklifAlma.ToString() || i.IhaleDurumu == IhaleDurumu.IlanEdildi.ToString());
-                istatistikler.Add(new IstatistikVeri { Baslik = "Aktif İhale", Deger = aktifIhaleler.ToString(), Tur = "Sayı" });
+                var aktifIhaleSayisi = await _context.Ihaleler
+                    .CountAsync(i => i.IhaleDurumu == IhaleDurumu.TeklifAlma.ToString() ||
+                                     i.IhaleDurumu == IhaleDurumu.IlanEdildi.ToString());
+                istatistikler.Add(new IstatistikVeri
+                {
+                    Baslik = "Aktif İhale Sayısı",
+                    Deger = aktifIhaleSayisi.ToString(),
+                    Tur = "Genel"
+                });
 
-                // Toplam ihale hacmi
-                var toplamHacim = await _context.Ihaleler.SumAsync(i => i.YaklasikMaliyet);
-                istatistikler.Add(new IstatistikVeri { Baslik = "Toplam İhale Hacmi", Deger = toplamHacim.ToString("N0") + " TL", Tur = "Para" });
+                // Tamamlanan ihaleler
+                var tamamlananIhaleSayisi = await _context.Ihaleler
+                    .CountAsync(i => i.IhaleDurumu == IhaleDurumu.Sonuclandi.ToString());
+                istatistikler.Add(new IstatistikVeri
+                {
+                    Baslik = "Tamamlanan İhale Sayısı",
+                    Deger = tamamlananIhaleSayisi.ToString(),
+                    Tur = "Genel"
+                });
 
-                // Ortalama teklif sayısı
-                var ortalamaTeklifSayisi = await _context.Ihaleler
+                // Ortalama teklif farkı (örnek hesaplama)
+                var tamamlananIhaleler = await _context.Ihaleler
                     .Include(i => i.IhaleTeklifleri)
-                    .Where(i => i.IhaleTeklifleri.Any())
-                    .AverageAsync(i => i.IhaleTeklifleri.Count);
-                istatistikler.Add(new IstatistikVeri { Baslik = "Ortalama Teklif Sayısı", Deger = ortalamaTeklifSayisi.ToString("F1"), Tur = "Sayı" });
+                    .Where(i => i.IhaleDurumu == IhaleDurumu.Sonuclandi.ToString() && i.IhaleTeklifleri.Count > 0)
+                    .ToListAsync();
+
+                if (tamamlananIhaleler.Any())
+                {
+                    var ortalamaTeklifFarki = (double)tamamlananIhaleler
+                        .Average(i => (i.YaklasikMaliyet - i.IhaleTeklifleri.Min(t => t.TeklifTutari)) /
+                                      i.YaklasikMaliyet * 100);
+                    istatistikler.Add(new IstatistikVeri
+                    {
+                        Baslik = "Ortalama Teklif Farkı (%)",
+                        Deger = ortalamaTeklifFarki.ToString("F2"),
+                        Tur = "Analiz"
+                    });
+                }
 
                 return istatistikler;
             }
@@ -238,35 +290,67 @@ namespace Mesfel.Services
 
         #region Private Helper Methods
 
+        /// <summary>
+        /// Verilen liste için ortanca (medyan) değeri hesaplar
+        /// </summary>
+        /// <param name="degerler">Hesaplanacak değerler listesi</param>
+        /// <returns>Ortanca değer</returns>
         private decimal HesaplaOrtanca(List<decimal> degerler)
         {
+            // Listeyi küçükten büyüğe sırala
             var siraliDegerler = degerler.OrderBy(d => d).ToList();
             int count = siraliDegerler.Count;
+
+            // Liste boşsa 0 döndür
             if (count == 0) return 0;
+
+            // Çift sayıda eleman varsa ortadaki iki sayının ortalamasını al
             if (count % 2 == 0)
                 return (siraliDegerler[count / 2 - 1] + siraliDegerler[count / 2]) / 2;
+            // Tek sayıda eleman varsa ortadaki sayıyı döndür
             else
                 return siraliDegerler[count / 2];
         }
 
+        /// <summary>
+        /// Teklifler arasındaki rekabet düzeyini ölçer
+        /// </summary>
+        /// <param name="teklifler">Teklif listesi</param>
+        /// <returns>Rekabet indeksi değeri</returns>
         private double HesaplaRekabetIndeksi(List<IhaleTeklif> teklifler)
         {
+            // En az 2 teklif yoksa rekabet yok say
             if (teklifler.Count < 2) return 0;
 
+            // En düşük ve en yüksek teklifleri bul
             var enDusuk = teklifler.Min(t => t.TeklifTutari);
             var enYuksek = teklifler.Max(t => t.TeklifTutari);
 
+            // Sıfıra bölme hatasını önle
             if (enDusuk == 0) return 0;
+
+            // Fark yüzdesini hesapla: ((en yüksek - en düşük) / en düşük) * 100
             return (double)((enYuksek - enDusuk) / enDusuk * 100);
         }
 
+        /// <summary>
+        /// Tekliflere göre piyasa durumunu analiz eder
+        /// </summary>
+        /// <param name="teklifler">Teklif listesi</param>
+        /// <param name="yaklasikMaliyet">İhalenin yaklaşık maliyeti</param>
+        /// <returns>Piyasa durumu açıklaması</returns>
         private string PiyasaAnalizYap(List<IhaleTeklif> teklifler, decimal yaklasikMaliyet)
         {
+            // Teklif yoksa bilgi ver
             if (!teklifler.Any()) return "Henüz teklif verilmemiş";
 
+            // Ortalama teklifi hesapla
             var ortalama = teklifler.Average(t => t.TeklifTutari);
+
+            // Ortalama teklifin yaklaşık maliyete oranını hesapla
             var yaklasikMaliyetOrani = (double)(ortalama / yaklasikMaliyet * 100);
 
+            // Orana göre piyasa durumunu belirle
             return yaklasikMaliyetOrani switch
             {
                 < 80 => "Agresif fiyatlandırma - Yüksek rekabet",
@@ -276,30 +360,42 @@ namespace Mesfel.Services
             };
         }
 
+        /// <summary>
+        /// Optimal teklif tutarını hesaplar
+        /// </summary>
+        /// <param name="ihale">İhale bilgileri</param>
+        /// <param name="teklifler">Mevcut teklifler</param>
+        /// <param name="benzerIhaleler">Benzer ihaleler</param>
+        /// <param name="hedefKarOrani">Hedeflenen kar oranı</param>
+        /// <returns>Optimal teklif tutarı</returns>
         private decimal HesaplaOptimalTeklif(Ihale ihale, List<IhaleTeklif> teklifler, List<Ihale> benzerIhaleler, decimal hedefKarOrani)
         {
-            // Maliyet + Hedef kar marjı
+            // Temel hedef: Maliyet + Hedef kar marjı
             var hedefTutar = ihale.YaklasikMaliyet * (1 + hedefKarOrani / 100);
 
-            // Rakip analizi
+            // Rakip teklifleri analiz et
             if (teklifler.Any())
             {
                 var enDusukTeklif = teklifler.Min(t => t.TeklifTutari);
-                var optimalTeklif = Math.Min(hedefTutar, enDusukTeklif * 0.99m); // %1 daha düşük
+                // En düşük tekliften %1 daha düşük teklif ver
+                var optimalTeklif = Math.Min(hedefTutar, enDusukTeklif * 0.99m);
                 return optimalTeklif;
             }
 
-            // Benzer ihale analizi
+            // Benzer ihaleleri analiz et
             if (benzerIhaleler.Any())
             {
+                // Benzer ihalelerdeki ortalama (en düşük teklif / yaklaşık maliyet) oranını bul
                 var benzerOrtalamaOran = benzerIhaleler
                     .Where(i => i.IhaleTeklifleri.Any())
                     .Average(i => (double)(i.IhaleTeklifleri.Min(t => t.TeklifTutari) / i.YaklasikMaliyet));
 
+                // Bu orana göre teklif hesapla
                 var benzerTabanliTeklif = ihale.YaklasikMaliyet * (decimal)benzerOrtalamaOran;
                 return Math.Min(hedefTutar, benzerTabanliTeklif);
             }
 
+            // Başka veri yoksa hedef tutarı döndür
             return hedefTutar;
         }
 
@@ -330,19 +426,29 @@ namespace Mesfel.Services
             };
         }
 
+        /// <summary>
+        /// İhale için risk analizi yapar
+        /// </summary>
+        /// <param name="ihale">İhale bilgileri</param>
+        /// <param name="teklifler">Mevcut teklifler</param>
+        /// <returns>Risk durumu açıklaması</returns>
         private string RiskAnaliziYap(Ihale ihale, List<IhaleTeklif> teklifler)
         {
             var riskler = new List<string>();
 
+            // Çok fazla teklif varsa yüksek rekabet riski
             if (teklifler.Count > 10)
                 riskler.Add("Yüksek rekabet");
 
+            // Anormal düşük teklifler varsa
             if (teklifler.Any(t => t.TeklifTutari < ihale.YaklasikMaliyet * 0.7m))
                 riskler.Add("Anormal düşük teklifler");
 
+            // Süre daralmışsa
             if (DateTime.Now > ihale.TeklifSonTarihi.AddDays(-3))
                 riskler.Add("Süre baskısı");
 
+            // Risk varsa listele, yoksa düşük risk bildir
             return riskler.Any() ? string.Join(", ", riskler) : "Düşük risk";
         }
 
@@ -374,48 +480,59 @@ namespace Mesfel.Services
             return (decimal)Math.Sqrt(varyans);
         }
 
+
+
         #endregion
     }
 
     #region DTO Classes
 
+    /// <summary>
+    /// İhale analiz sonuçlarını tutan sınıf
+    /// </summary>
     public class IhaleAnalizSonucu
     {
-        public int IhaleId { get; set; }
-        public string IhaleAdi { get; set; } = string.Empty;
-        public decimal YaklasikMaliyet { get; set; }
-        public int ToplamTeklifSayisi { get; set; }
-        public decimal EnDusukTeklif { get; set; }
-        public decimal EnYuksekTeklif { get; set; }
-        public decimal OrtalamaTeklif { get; set; }
-        public decimal Ortanca { get; set; }
-        public decimal KazananTeklif { get; set; }
-        public string KazananFirma { get; set; } = string.Empty;
-        public double RekabetIndeksi { get; set; }
-        public string PiyasaAnalizi { get; set; } = string.Empty;
+        public int IhaleId { get; set; } // İhale ID'si
+        public string IhaleAdi { get; set; } = string.Empty; // İhale adı
+        public decimal YaklasikMaliyet { get; set; } // Yaklaşık maliyet
+        public int ToplamTeklifSayisi { get; set; } // Toplam teklif sayısı
+        public decimal EnDusukTeklif { get; set; } // En düşük teklif tutarı
+        public decimal EnYuksekTeklif { get; set; } // En yüksek teklif tutarı
+        public decimal OrtalamaTeklif { get; set; } // Ortalama teklif tutarı
+        public decimal Ortanca { get; set; } // Ortanca (medyan) teklif tutarı
+        public decimal KazananTeklif { get; set; } // Kazanan teklif tutarı
+        public string KazananFirma { get; set; } = string.Empty; // Kazanan firma adı
+        public double RekabetIndeksi { get; set; } // Rekabet düzeyi indeksi
+        public string PiyasaAnalizi { get; set; } = string.Empty; // Piyasa durumu analizi
     }
 
+    /// <summary>
+    /// Optimal teklif hesaplama sonuçlarını tutan sınıf
+    /// </summary>
     public class OptimalTeklifSonucu
     {
-        public int IhaleId { get; set; }
-        public decimal YaklasikMaliyet { get; set; }
-        public decimal HedefKarOrani { get; set; }
-        public decimal OptimalTeklifTutari { get; set; }
-        public double KazanmaOlasiligi { get; set; }
-        public string RiskAnalizi { get; set; } = string.Empty;
-        public List<string> Oneriler { get; set; } = new List<string>();
+        public int IhaleId { get; set; } // İhale ID'si
+        public decimal YaklasikMaliyet { get; set; } // Yaklaşık maliyet
+        public decimal HedefKarOrani { get; set; } // Hedeflenen kar oranı (%)
+        public decimal OptimalTeklifTutari { get; set; } // Hesaplanan optimal teklif tutarı
+        public double KazanmaOlasiligi { get; set; } // Kazanma olasılığı (%)
+        public string RiskAnalizi { get; set; } = string.Empty; // Risk analizi sonucu
+        public List<string> Oneriler { get; set; } = new List<string>(); // Öneriler listesi
     }
 
+    /// <summary>
+    /// Teklif karşılaştırma bilgilerini tutan sınıf
+    /// </summary>
     public class TeklifKarsilastirma
     {
-        public int TeklifId { get; set; }
-        public string FirmaAdi { get; set; }
-        public decimal TeklifTutari { get; set; }
-        public double YaklasikMaliyetOrani { get; set; }
-        public int Siralama { get; set; }
-        public double FarkYuzdesi { get; set; }
-        public double KazanmaOlasiligi { get; set; }
-        public string RiskDurumu { get; set; } = string.Empty;
+        public int TeklifId { get; set; } // Teklif ID'si
+        public string FirmaAdi { get; set; } // Firma adı
+        public decimal TeklifTutari { get; set; } // Teklif tutarı
+        public double YaklasikMaliyetOrani { get; set; } // Yaklaşık maliyete oranı (%)
+        public int Siralama { get; set; } // Sıralama (1 en iyi)
+        public double FarkYuzdesi { get; set; } // En düşük teklife göre fark (%)
+        public double KazanmaOlasiligi { get; set; } // Kazanma olasılığı (%)
+        public string RiskDurumu { get; set; } = string.Empty; // Risk durumu
     }
 
     public class GecimiTeminatHesapla
@@ -440,6 +557,14 @@ namespace Mesfel.Services
         public string Baslik { get; set; } = string.Empty;
         public string Deger { get; set; } = string.Empty;
         public string Tur { get; set; } = string.Empty;
+    }
+
+    public class IhaleIstatistikleri
+    {
+        public int ToplamIhaleSayisi { get; set; }
+        public int AktifIhaleSayisi { get; set; }
+        public int TamamlananIhaleSayisi { get; set; }
+        public double OrtalamaTeklifFarki { get; set; }
     }
 
     #endregion
