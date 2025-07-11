@@ -70,19 +70,34 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Veritabaný oluþturma ve seed data
+//using (var scope = app.Services.CreateScope())
+//{
+//    var services = scope.ServiceProvider;
+//    try
+//    {
+//        var context = services.GetRequiredService<ApplicationDbContext>();
+//        context.Database.Migrate(); // Migration'larý uygula
+//        SeedData.Initialize(services); // Seed verilerini ekle
+//    }
+//    catch (Exception ex)
+//    {
+//        var logger = services.GetRequiredService<ILogger<Program>>();
+//        logger.LogError(ex, "Veritabaný oluþturulurken veya seed data eklenirken hata oluþtu.");
+//    }
+//}
+
+// Program.cs içinde
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate(); // Migration'larý uygula
-        //SeedData.Initialize(services); // Seed verilerini ekle
+        await SeedData.Initialize(services);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabaný oluþturulurken veya seed data eklenirken hata oluþtu.");
+        logger.LogError(ex, "Seed verileri eklenirken bir hata oluþtu.");
     }
 }
 

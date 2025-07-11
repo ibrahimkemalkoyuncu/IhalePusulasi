@@ -16,6 +16,7 @@ namespace Mesfel.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IIhaleHesaplamaService _ihaleHesaplamaService;
 
+
         public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, IIhaleHesaplamaService ihaleHesaplamaService)
         {
             _logger = logger;

@@ -51,6 +51,11 @@ namespace Mesfel.ViewModel
         public string Aciklama { get; set; }
         public DateTime Tarih { get; set; }
         public string Icon { get; set; }
+
+        // Yeni eklenen özellikler
+        public string Tip { get; set; } // "Yeni", "Güncelleme", "Uyarı", "Hata"
+        public string KullaniciAdi { get; set; }
+        public string Kaynak { get; set; } // "Ihale", "Teklif", "Sistem" vb.
     }
 
     /// <summary>

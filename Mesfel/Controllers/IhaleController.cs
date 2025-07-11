@@ -177,11 +177,25 @@ namespace Mesfel.Controllers
         }
 
         // Duruma göre filtreleme
+        //public async Task<IActionResult> FilterByStatus(IhaleDurumu durum)
+        //{
+        //    try
+        //    {
+        //        var ihaleler = await _ihaleService.GetByDurumAsync(durum);
+        //        return View("Index", ihaleler);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "İhaleler duruma göre filtrelenirken hata oluştu. Durum: {Durum}", durum);
+        //        return RedirectToAction("Error", "Home");
+        //    }
+        //}
+
         public async Task<IActionResult> FilterByStatus(IhaleDurumu durum)
         {
             try
             {
-                var ihaleler = await _ihaleService.GetByDurumAsync(durum);
+                var ihaleler = await _ihaleService.GetByDurumAsync(durum); // Enum'ı string'e çeviriyoruz
                 return View("Index", ihaleler);
             }
             catch (Exception ex)

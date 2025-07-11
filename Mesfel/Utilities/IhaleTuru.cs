@@ -15,7 +15,14 @@ namespace Mesfel.Utilities
         YapimIsi = 3,
 
         [Display(Name = "Danışmanlık Hizmeti")]
-        Danismanlik = 4
+        Danismanlik = 4,
+
+        [Display(Name = "Özel Hizmeti")]
+        Ozel = 5,
+
+        [Display(Name = "Kamu Hizmeti")]
+        Kamu = 5
+
 
     }
 }
